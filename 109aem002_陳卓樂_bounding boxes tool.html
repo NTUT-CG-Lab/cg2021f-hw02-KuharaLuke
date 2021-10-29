@@ -93,6 +93,8 @@
 		let index = 0;
 		let material,geometry;
 		let needreset = false;
+		let whichline = 0;
+		let jsonforDL = {};
 		
 
 		const vpds = [];
@@ -244,9 +246,46 @@
 							scene.add(mesh);
 
 						}, onProgress, null);
-						}
-						console.log(index);
-										
+				}else if(event.key === "q"){
+					if((scene.getObjectByName("左眼下") != null && scene.getObjectByName("右眼下") == null) || whichline == 5){
+						var v = new THREE.Vector3()
+						var posit = scene.getObjectByName("左眼下").position
+						v.x = -posit.x * 2;
+						v.y = posit.y;
+						v.z - posit.z;
+						drawline(v,"#A569BD","右眼下");
+						whichline = 6;
+						
+					}
+					else if((scene.getObjectByName("左眼上") != null && scene.getObjectByName("右眼上") == null) || whichline == 6){
+						var v = new THREE.Vector3()
+						var posit = scene.getObjectByName("左眼上").position
+						v.x = -posit.x * 2;
+						v.y = posit.y;
+						v.z - posit.z;
+						drawline(v,"#A569BD","右眼上");
+						whichline = 7;
+					}
+					else if((scene.getObjectByName("左眼左") != null && scene.getObjectByName("右眼左") == null)|| whichline == 7){
+						var v = new THREE.Vector3()
+						var posit = scene.getObjectByName("左眼左").position
+						v.x = -posit.x ;
+						v.y = posit.y;
+						v.z - posit.z;
+						drawline2(v,"#3498DB","右眼左");
+						whichline = 8;
+					}
+					else if((scene.getObjectByName("左眼右") != null && scene.getObjectByName("右眼右") == null)|| whichline == 8){
+						var v = new THREE.Vector3()
+						var posit = scene.getObjectByName("左眼右").position
+						v.x = -posit.x ;
+						v.y = posit.y;
+						v.z - posit.z;
+						drawline2(v,"#3498DB","右眼右");
+						whichline = 1;
+						createdljson();
+					}
+				}				
 
 			}
 			window.addEventListener('keypress',changemodel)
@@ -254,13 +293,13 @@
 			//
 
 			window.addEventListener('resize', onWindowResize);
-			window.addEventListener('click',onMouseclick);
+			window.addEventListener('click',onMouseclick,false);
 			
 			//鏡頭控制
 			const cameracontrols = new OrbitControls(camera, renderer.domElement);
 			cameracontrols.minDistance = 10;
 			cameracontrols.maxDistance = 100;
-			cameracontrols.enableRotate = false;
+			cameracontrols.enableRotate = true;
 			
 			function initGui() {
 
@@ -423,57 +462,137 @@
 		}
 
 		function onMouseclick(){
-			const mouse = new THREE.Vector2();
-			mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-			mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+			const mouse = new THREE.Vector3();
+			const { left, top, width, height } = event.target.getBoundingClientRect();
+			mouse.x = ((event.clientX - left + 1) / width) * 2 - 1;
+			mouse.y = -((event.clientY - top + 1) / height) * 2 + 1;
 			var position = new THREE.Vector3();
+			mouse.z=((camera.near + camera.far) / (camera.near - camera.far));
+			mouse.unproject(camera);
 			var raycaster=new THREE.Raycaster();
 			raycaster.setFromCamera(mouse, camera);
 			var intersects = raycaster.intersectObjects(scene.children,true);
-			if (intersects.length > 0) {
-					lefteye = intersects[0].object.getObjectByName('左目');
-					console.log('Intersection:', lefteye);
-					drawline(lefteye.position.x,lefteye.position.y,lefteye);
-				}
+			console.log(mouse);
+			if (whichline ==1) {
+				needreset = true;
+			}
+			//if (intersects.length > 0) {
+					//lefteye = intersects[0].object.getObjectByName('左目');
+					//console.log('Intersection:', lefteye);
+					//lefteye.getWorldPosition(eyelineposition);
+					//drawline(eyelineposition.x,eyelineposition.y,lefteye);
+						if(scene.getObjectByName("左眼下") == null || whichline == 1)
+						{
+							drawline(mouse,"#ff0000","左眼下");
+							if (needreset){
+							scene.remove(scene.getObjectByName("左眼下"))
+							whichline = 2;
+							}
+						}
+						else if(scene.getObjectByName("左眼上") == null || whichline ==2)
+						{
+							drawline(mouse,"#ff0000","左眼上");
+							if (whichline == 2){
+							scene.remove(scene.getObjectByName("左眼上"))
+							whichline = 3;
+							}
+						}
+						else if(scene.getObjectByName("左眼左")==null || whichline ==3){
+							drawline2(mouse,"#00ff00","左眼左");
+							if (whichline == 3){
+							scene.remove(scene.getObjectByName("左眼左"))
+							whichline = 4;
+							}
+						}
+						else if(scene.getObjectByName("左眼右")==null || whichline == 4){
+							drawline2(mouse,"#00ff00","左眼右");
+							if (whichline == 4){
+							scene.remove(scene.getObjectByName("左眼右"))
+							whichline = 5;
+							}
+						}
+				//}
 
 			
+		}
+
+
+		function drawline(vector,color,name) {
+			
+			var material = new THREE.LineBasicMaterial({ color: color });
+			var geometry = new THREE.BufferGeometry();
+
+			const points = [];
+			points.push(new THREE.Vector3(-0.5, 0, 0));
+			points.push(new THREE.Vector3(1, 0, 0));
+
+			geometry.setFromPoints(points);
+			var line = new THREE.Line(geometry, material);
+			
+			line.name = name;
+			line.position.y = vector.y;
+			line.position.x = vector.x;
+			line.position.z = 2;
+			console.log(vector);
+	
+			scene.add(line);
+		}
+
+		function drawline2(vector,color,name) {
+			
+			var material = new THREE.LineBasicMaterial({ color: color });
+			var geometry = new THREE.BufferGeometry();
+
+			const points = [];
+			points.push(new THREE.Vector3(0, -0.5, 0));
+			points.push(new THREE.Vector3(0, 1, 0));
+
+			geometry.setFromPoints(points);
+			var line = new THREE.Line(geometry, material);
+			
+			line.name = name;
+			line.position.y = vector.y;
+			line.position.x = vector.x;
+			line.position.z = 2;
+			console.log(vector);
+	
+			scene.add(line);
+		}
+	
+		function createdljson(){
+			let stuff = [
+				"左眼下",
+				"左眼上",
+				"左眼左",
+				"左眼右",
+				"右眼下",
+				"右眼上",
+				"右眼左",
+				"右眼右",
+			];
+			for (var i = 0; i<stuff.length;i++) {
+				console.log(stuff[i]);
+				console.log(scene.getObjectByName(stuff[i]));
+				jsonforDL[stuff[i]]=scene.getObjectByName(stuff[i]).position;
+			}
+			var json= JSON.stringify(jsonforDL);
+			json = [json];
+        	var blob1 = new Blob(json, { type: "text/plain;charset=utf-8" });
+			var isIE = false || !!document.documentMode;
+			if (isIE) {
+				window.navigator.msSaveBlob(blob1, "positions.json");
+			} else {
+				var url = window.URL || window.webkitURL;
+				var link = url.createObjectURL(blob1);
+				var a = document.createElement("a");
+				a.download = "positions.json";
+				a.href = link;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+			}
 		}
 		
-		function drawline(x,y,obj){
-			material = new THREE.LineBasicMaterial({color:0xff0000});
-			geometry = new THREE.BufferGeometry();
-			
-			if (needreset){
-				obj.remove(line1);
-				obj.remove(line2);
-				obj.remove(line3);
-				obj.remove(line4);	
-			};
-			const points =[];
-			points.push( new THREE.Vector3( - 2, 0, 0 ) );
-			points.push( new THREE.Vector3( 0, 0, 2 ) );
-			geometry.setFromPoints( points );
-			var line = new THREE.Line(geometry,material);
-			obj.add(line);
-			var line2 = new THREE.Line(geometry,material);
-			obj.add(line2);
-			line2.translateY(- 0.35);
-			material = new THREE.LineBasicMaterial({color:0x00ff00});
-			var line3 = new THREE.Line(geometry,material);
-			obj.add(line3);
-			line3.translateX(- 1.1);
-			line3.translateY(- 1);
-			line3.rotateZ(THREE.MathUtils.degToRad(- 90));
-			let line4 = new THREE.Line(geometry,material);
-			obj.add(line4);
-			line4.rotateZ(THREE.MathUtils.degToRad(- 90));
-			line4.translateX(0.7);
-			line4.translateY(- 0.5);
-			needreset=true;
-		}
-
-	
-
 		function onWindowResize() {
 
 			let scale = 30;
